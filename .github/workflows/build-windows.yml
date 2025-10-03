@@ -26,17 +26,30 @@ jobs:
         run: choco install llvm -y
         shell: cmd
       
-      - name: Setup vcpkg and install all dependencies
+      - name: Setup vcpkg
         run: |
-          git clone https://github.com/microsoft/vcpkg C:\vcpkg
-          C:\vcpkg\bootstrap-vcpkg.bat
-          C:\vcpkg\vcpkg install opus:x64-windows-static libvpx:x64-windows-static libyuv:x64-windows-static aom:x64-windows-static --classic
+          if not exist C:\vcpkg (
+            git clone https://github.com/microsoft/vcpkg C:\vcpkg
+            C:\vcpkg\bootstrap-vcpkg.bat
+          )
         shell: cmd
       
-      - name: Verify opus installation
+      - name: Install vcpkg dependencies
         run: |
+          C:\vcpkg\vcpkg install opus:x64-windows-static --classic
+          C:\vcpkg\vcpkg install libvpx:x64-windows-static --classic
+          C:\vcpkg\vcpkg install libyuv:x64-windows-static --classic
+          C:\vcpkg\vcpkg install aom:x64-windows-static --classic
+        shell: cmd
+      
+      - name: Verify installations
+        run: |
+          if not exist C:\vcpkg\installed\x64-windows-static\include\opus (
+            echo ERROR: opus headers not found
+            exit /b 1
+          )
+          echo opus installed successfully
           dir C:\vcpkg\installed\x64-windows-static\include\opus
-          dir C:\vcpkg\installed\x64-windows-static\lib\opus.lib
         shell: cmd
       
       - name: Build Release
@@ -58,7 +71,7 @@ jobs:
       
       - name: Create distribution package
         run: |
-          mkdir distribution
+          if not exist distribution mkdir distribution
           copy target\release\rustdesk.exe distribution\THOR-Remote.exe
           copy target\release\sciter.dll distribution\
           if exist target\release\src xcopy /E /I target\release\src distribution\src
