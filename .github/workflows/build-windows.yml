@@ -26,17 +26,18 @@ jobs:
         run: choco install llvm -y
         shell: cmd
       
-      - name: Setup vcpkg
+      - name: Setup vcpkg and install all dependencies
         run: |
           git clone https://github.com/microsoft/vcpkg C:\vcpkg
           C:\vcpkg\bootstrap-vcpkg.bat
+          C:\vcpkg\vcpkg install opus:x64-windows-static libvpx:x64-windows-static libyuv:x64-windows-static aom:x64-windows-static --classic
         shell: cmd
       
-      - name: Install vcpkg dependencies from manifest
+      - name: Verify opus installation
         run: |
-          $env:VCPKG_ROOT = "C:\vcpkg"
-          C:\vcpkg\vcpkg install --triplet x64-windows-static
-        shell: powershell
+          dir C:\vcpkg\installed\x64-windows-static\include\opus
+          dir C:\vcpkg\installed\x64-windows-static\lib\opus.lib
+        shell: cmd
       
       - name: Build Release
         env:
@@ -44,15 +45,15 @@ jobs:
         run: cargo build --release
         shell: cmd
       
-      - name: Download Sciter
+      - name: Download Sciter DLL
         run: |
           Invoke-WebRequest -Uri "https://raw.githubusercontent.com/c-smile/sciter-sdk/master/bin.win/x64/sciter.dll" -OutFile "target/release/sciter.dll"
         shell: powershell
       
-      - name: Prepare resources
+      - name: Prepare UI resources
         run: |
-          xcopy /E /I /Y src\ui target\release\src\ui
-          xcopy /E /I /Y res target\release\res
+          if exist src\ui xcopy /E /I /Y src\ui target\release\src\ui
+          if exist res xcopy /E /I /Y res target\release\res
         shell: cmd
       
       - name: Create distribution package
@@ -60,8 +61,8 @@ jobs:
           mkdir distribution
           copy target\release\rustdesk.exe distribution\THOR-Remote.exe
           copy target\release\sciter.dll distribution\
-          xcopy /E /I target\release\src distribution\src
-          xcopy /E /I target\release\res distribution\res
+          if exist target\release\src xcopy /E /I target\release\src distribution\src
+          if exist target\release\res xcopy /E /I target\release\res distribution\res
         shell: cmd
       
       - name: Upload build artifact
