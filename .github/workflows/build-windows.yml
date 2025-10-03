@@ -1,0 +1,84 @@
+name: Build THOR Remote
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  build-windows:
+    runs-on: windows-latest  # GitHub provides this for free
+    
+    steps:
+      # Step 1: Get your code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      
+      # Step 2: Install Rust
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+      
+      # Step 3: Install LLVM (for bindgen)
+      - name: Install LLVM
+        run: choco install llvm -y
+        shell: cmd
+      
+      # Step 4: Install C/C++ dependencies
+      - name: Setup vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg C:\vcpkg
+          C:\vcpkg\bootstrap-vcpkg.bat
+        shell: cmd
+      
+      - name: Install dependencies
+        run: |
+          C:\vcpkg\vcpkg install libvpx:x64-windows-static
+          C:\vcpkg\vcpkg install opus:x64-windows-static
+          C:\vcpkg\vcpkg install libyuv:x64-windows-static
+          C:\vcpkg\vcpkg install aom:x64-windows-static
+        shell: cmd
+      
+      # Step 5: Build
+      - name: Build Release
+        env:
+          VCPKG_ROOT: C:\vcpkg
+        run: cargo build --release
+        shell: cmd
+      
+      # Step 6: Get Sciter DLL
+      - name: Download Sciter
+        run: |
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/c-smile/sciter-sdk/master/bin.win/x64/sciter.dll" -OutFile "target/release/sciter.dll"
+        shell: powershell
+      
+      # Step 7: Copy UI resources
+      - name: Prepare resources
+        run: |
+          xcopy /E /I /Y src\ui target\release\src\ui
+          xcopy /E /I /Y res target\release\res
+        shell: cmd
+      
+      # Step 8: Package everything
+      - name: Create distribution package
+        run: |
+          mkdir distribution
+          copy target\release\rustdesk.exe distribution\THOR-Remote.exe
+          copy target\release\sciter.dll distribution\
+          xcopy /E /I target\release\src distribution\src
+          xcopy /E /I target\release\res distribution\res
+        shell: cmd
+      
+      # Step 9: Upload for download
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: THOR-Remote-Windows
+          path: distribution/
+          retention-days: 90
+
