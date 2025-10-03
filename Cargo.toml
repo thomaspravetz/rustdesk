@@ -2,7 +2,7 @@
 name = "THORRemote"
 version = "1.4.2"
 authors = ["Binary Dynamics"]
-edition = "2025"
+edition = "2021"
 build= "build.rs"
 description = "THOR Remote Desktop"
 default-run = "THORRemote"
