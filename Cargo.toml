@@ -1,5 +1,5 @@
 [package]
-name = "THOR Remote"
+name = "THORRemote"
 version = "1.4.2"
 authors = ["Binary Dynamics"]
 edition = "2021"
