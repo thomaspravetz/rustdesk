@@ -2,10 +2,10 @@
 name = "THORRemote"
 version = "1.4.2"
 authors = ["Binary Dynamics"]
-edition = "2021"
+edition = "2025"
 build= "build.rs"
 description = "THOR Remote Desktop"
-default-run = "rustdesk"
+default-run = "THORRemote"
 rust-version = "1.75"
 
 [lib]
@@ -19,6 +19,10 @@ path = "src/naming.rs"
 [[bin]]
 name = "service"
 path = "src/service.rs"
+
+[[bin]]
+name = "THORRemote"
+path = "src/main.rs"
 
 [features]
 inline = []
