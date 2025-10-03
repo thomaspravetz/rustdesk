@@ -32,13 +32,11 @@ jobs:
           C:\vcpkg\bootstrap-vcpkg.bat
         shell: cmd
       
-      - name: Install dependencies
+      - name: Install vcpkg dependencies from manifest
         run: |
-          C:\vcpkg\vcpkg install libvpx:x64-windows-static
-          C:\vcpkg\vcpkg install opus:x64-windows-static
-          C:\vcpkg\vcpkg install libyuv:x64-windows-static
-          C:\vcpkg\vcpkg install aom:x64-windows-static
-        shell: cmd
+          $env:VCPKG_ROOT = "C:\vcpkg"
+          C:\vcpkg\vcpkg install --triplet x64-windows-static
+        shell: powershell
       
       - name: Build Release
         env:
